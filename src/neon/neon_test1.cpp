@@ -33,21 +33,33 @@ const uint32_t updateInterval = 20; // 20 мс = 50 кадров в секунд
 
 enum class FluorescentPhase : uint8_t
 {
+    // Полный перезапуск сценария розжига.
     reset,
+    // Небольшая пауза в темноте перед "оживанием" лампы.
     offDelay,
+    // Прогрев электродов: на концах появляется тёплое свечение.
     preheat,
+    // Серия неудачных попыток зажечь дугу: резкие вспышки и провалы.
     strike,
+    // Лампа уже почти запустилась, но ещё плавает по яркости.
     stabilize,
+    // Нормальная работа с редкими микросбоями.
     steady
 };
 
 struct FluorescentLampState
 {
+    // Текущая стадия сценария розжига лампы.
     FluorescentPhase phase = FluorescentPhase::reset;
+    // Время входа в текущую фазу: нужно для расчёта её длительности.
     uint32_t phaseStartedAt = 0;
+    // Момент следующего переключения или обновления внутри текущей фазы.
     uint32_t nextChangeAt = 0;
+    // Сколько ещё резких вспышек осталось до устойчивого свечения.
     uint8_t remainingBursts = 0;
+    // Базовая яркость на этапе стабилизации.
     uint8_t settleBrightness = 0;
+    // В текущий момент дуга "схватилась" или лампа снова погасла.
     bool outputOn = false;
 };
 
@@ -292,11 +304,13 @@ CRGB scaleColor(const CRGB &color, uint8_t brightness)
 
 void drawFluorescentTube(uint8_t brightness, uint8_t noiseAmount = 0, uint8_t warmEdge = 0, bool addDarkGap = false)
 {
+    // Холодный бело-зелёный оттенок характерен для люминесцентной лампы.
     const CRGB tubeTint = CRGB(200, 255, 228);
     fill_solid(leds, NUM_LEDS, scaleColor(tubeTint, brightness));
 
     if (noiseAmount > 0)
     {
+        // Небольшой случайный разброс яркости делает свечение "грязным".
         for (int i = 0; i < NUM_LEDS; i++)
         {
             leds[i].nscale8_video(qsub8(255, random8(noiseAmount + 1)));
@@ -305,6 +319,7 @@ void drawFluorescentTube(uint8_t brightness, uint8_t noiseAmount = 0, uint8_t wa
 
     if (addDarkGap && NUM_LEDS > 12)
     {
+        // Иногда дуга зажигает трубку неравномерно, оставляя тёмный провал.
         int gapStart = random16(NUM_LEDS - 6);
         int gapLength = 2 + random8(5);
 
@@ -316,6 +331,7 @@ void drawFluorescentTube(uint8_t brightness, uint8_t noiseAmount = 0, uint8_t wa
 
     if (warmEdge > 0)
     {
+        // На старте концы лампы могут светиться теплее основного тела трубки.
         CRGB filamentTint = scaleColor(CRGB(255, 120, 18), warmEdge);
         const uint8_t edgeSize = NUM_LEDS >= 60 ? 5 : 3;
 
@@ -326,11 +342,14 @@ void drawFluorescentTube(uint8_t brightness, uint8_t noiseAmount = 0, uint8_t wa
         }
     }
 
+    // Лёгкий blur сглаживает отдельные точки и делает "ламповый" объём.
     blur1d(leds, NUM_LEDS, addDarkGap ? 48 : 24);
 }
 
 void resetFluorescentLamp(uint32_t now)
 {
+    // Каждый новый запуск начинается с короткой темноты и случайного числа вспышек,
+    // чтобы эффект не выглядел одинаково при каждом выборе алгоритма.
     lumLamp.phase = FluorescentPhase::offDelay;
     lumLamp.phaseStartedAt = now;
     lumLamp.nextChangeAt = now + 120 + random16(450);
@@ -353,6 +372,7 @@ void Lum1()
     switch (lumLamp.phase)
     {
     case FluorescentPhase::offDelay:
+        // Полностью тёмная лампа перед стартом.
         fill_solid(leds, NUM_LEDS, CRGB::Black);
 
         if (now >= lumLamp.nextChangeAt)
@@ -365,6 +385,7 @@ void Lum1()
 
     case FluorescentPhase::preheat:
     {
+        // Плавный тёплый прогрев концов и редкие слабые пробои по трубке.
         uint8_t edgeWarm = beatsin8(18, 24, 90);
         bool faintArc = (now - lumLamp.phaseStartedAt > 150) && (random8() < 70);
 
@@ -381,6 +402,7 @@ void Lum1()
     }
 
     case FluorescentPhase::strike:
+        // Главная "нервная" стадия: лампа то вспыхивает, то снова срывается.
         if (now >= lumLamp.nextChangeAt)
         {
             lumLamp.outputOn = !lumLamp.outputOn;
@@ -402,15 +424,18 @@ void Lum1()
 
         if (lumLamp.outputOn)
         {
+            // Резкая яркая вспышка, но ещё с шумом и провалами.
             drawFluorescentTube(150 + random8(106), 70 + random8(50), 10 + random8(24), true);
         }
         else
         {
+            // Почти полное гашение, иногда со слабым остаточным свечением.
             drawFluorescentTube(random8() < 200 ? 0 : (12 + random8(20)), 180, 25 + random8(30), true);
         }
         break;
 
     case FluorescentPhase::stabilize:
+        // После удачного пробоя лампа постепенно набирает рабочую яркость.
         if (now >= lumLamp.nextChangeAt)
         {
             lumLamp.settleBrightness = qadd8(lumLamp.settleBrightness, 10 + random8(18));
@@ -424,6 +449,7 @@ void Lum1()
             }
         }
 
+        // Яркость растёт, но пока ещё возможны локальные провалы и дрожание.
         drawFluorescentTube(qsub8(lumLamp.settleBrightness + random8(30), random8() < 60 ? random8(70) : 0),
                             40 + random8(30),
                             8 + random8(12),
@@ -432,17 +458,21 @@ void Lum1()
 
     case FluorescentPhase::steady:
     {
+        // Нормальный режим: почти стабильный свет с лёгкой сетевой пульсацией.
         uint8_t ripple = beatsin8(100, 188, 225);
         uint8_t slowDrift = beatsin8(7, 0, 12);
         drawFluorescentTube(qadd8(ripple, slowDrift), 10, 4, false);
 
         if (random8() < 10)
         {
+            // Редкие микропровалы добавляют ощущение старой уставшей лампы.
             leds[random16(NUM_LEDS)].fadeToBlackBy(70);
         }
 
         if (now >= lumLamp.nextChangeAt)
         {
+            // Иногда даже уже горящая лампа кратко "спотыкается" и перескакивает
+            // обратно в короткую серию вспышек.
             lumLamp.phase = FluorescentPhase::strike;
             lumLamp.phaseStartedAt = now;
             lumLamp.nextChangeAt = now;
@@ -488,6 +518,7 @@ namespace NEON
             {
                 if (TypeAlg == (int)Alg::Lum1)
                 {
+                    // При повторном выборе эффекта запускаем весь сценарий заново.
                     lumLamp.phase = FluorescentPhase::reset;
                 }
 

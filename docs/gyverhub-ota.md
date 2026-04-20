@@ -23,3 +23,16 @@ This project is configured for GyverHub OTA checks using:
 5. The workflow will verify `project.json`, build the firmware, and attach `AutoNEON-esp32-s3-devkitc-1.bin` to the release.
 
 After that, GyverHub clients that open the device card should see the new version and offer OTA update.
+
+## OTA test cycle
+
+If the board already runs version `0.1.1`, GyverHub will not offer OTA while GitHub still advertises `0.1.1`.
+For the next OTA test you must publish a strictly newer version, for example `0.1.2`.
+
+On boot the firmware now prints OTA diagnostics to Serial:
+
+- Current GyverHub firmware version string
+- Expected `project.json` URL
+- Expected latest release asset URL
+
+That makes it easier to verify that the device and repository metadata match before testing OTA.

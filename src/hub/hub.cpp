@@ -10,6 +10,24 @@ int NLeds;
 
 namespace HUB
 {
+  namespace
+  {
+    String firmwareVersion()
+    {
+      return String(F(PROJECT_GH_REPO "@")) + F(PROJECT_FW_VERSION);
+    }
+
+    String projectJsonUrl()
+    {
+      return String(F("https://raw.githubusercontent.com/")) + F(PROJECT_GH_REPO) + F("/main/project.json");
+    }
+
+    String releaseAssetUrl()
+    {
+      return String(F("https://github.com/")) + F(PROJECT_GH_REPO) + F("/releases/latest/download/") + F(PROJECT_RELEASE_ASSET);
+    }
+  }
+
   void build(gh::Builder &b)
   {
     b.Input(&NLeds).size(2);
@@ -21,12 +39,16 @@ namespace HUB
   void setup()
   {
     hub.mqtt.config("m3.wqtt.ru", 14635, "u_9ICRMS", "n5V6oZGA");
-    hub.setVersion(String(F(PROJECT_GH_REPO "@")) + F(PROJECT_FW_VERSION));
+    hub.setVersion(firmwareVersion());
     // hub.mqtt.config("test.mosquitto.org", 8081);
 
     hub.onBuild(build);
     hub.begin();
 
+    Serial.println("[OTA] GyverHub OTA metadata");
+    Serial.println("[OTA] Firmware: " + firmwareVersion());
+    Serial.println("[OTA] project.json: " + projectJsonUrl());
+    Serial.println("[OTA] release bin: " + releaseAssetUrl());
     Serial.println("hub begin");
     hub.tick();
   }

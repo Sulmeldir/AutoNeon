@@ -28,6 +28,7 @@ def read_defines() -> dict[str, str]:
         "PROJECT_RELEASE_NOTES",
         "PROJECT_GH_CHIP_FAMILY",
         "PROJECT_RELEASE_ASSET",
+        "PROJECT_RELEASE_MANIFEST",
     }
     missing = sorted(required - values.keys())
     if missing:
@@ -37,17 +38,18 @@ def read_defines() -> dict[str, str]:
 
 
 def build_project_json(values: dict[str, str]) -> dict[str, object]:
+    version = values["PROJECT_FW_VERSION"]
     return {
         "name": values["PROJECT_NAME"],
         "about": values["PROJECT_DESCRIPTION"],
-        "version": values["PROJECT_FW_VERSION"],
+        "version": version,
         "notes": values["PROJECT_RELEASE_NOTES"],
         "builds": [
             {
                 "chipFamily": values["PROJECT_GH_CHIP_FAMILY"],
                 "parts": [
                     {
-                        "path": f'https://github.com/{values["PROJECT_GH_REPO"]}/releases/latest/download/{values["PROJECT_RELEASE_ASSET"]}',
+                        "path": f'https://github.com/{values["PROJECT_GH_REPO"]}/releases/download/v{version}/{values["PROJECT_RELEASE_ASSET"]}',
                         "offset": 0,
                     }
                 ],

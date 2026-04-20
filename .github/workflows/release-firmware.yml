@@ -39,6 +39,9 @@ jobs:
       - name: Prepare release asset
         run: cp .pio/build/esp32-s3-devkitc-1/firmware.bin AutoNEON-esp32-s3-devkitc-1.bin
 
+      - name: Prepare release manifest
+        run: cp project.json AutoNEON-project.json
+
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
@@ -49,6 +52,8 @@ jobs:
         if: github.event_name == 'release' || startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: AutoNEON-esp32-s3-devkitc-1.bin
+          files: |
+            AutoNEON-esp32-s3-devkitc-1.bin
+            AutoNEON-project.json
           fail_on_unmatched_files: true
           generate_release_notes: true

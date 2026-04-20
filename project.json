@@ -1,8 +1,8 @@
 {
   "name": "AutoNEON",
   "about": "ESP32-S3 controller for FastLED neon strip effects with GyverHub UI",
-  "version": "0.1.3",
-  "notes": "Manual OTA fallback release",
+  "version": "0.1.4",
+  "notes": "Manual OTA smoke test target",
   "builds": [
     {
       "chipFamily": "ESP32-S3",

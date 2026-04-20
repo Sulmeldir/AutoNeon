@@ -1,7 +1,7 @@
-
 #include <GyverHub.h>
+#include "project_meta.h"
 
-GyverHub hub("MyDevices3", "ESP8266", ""); // имя сети, имя устройства, иконка
+GyverHub hub("AutoNEON", "ESP32-S3", "пѓ«");
 extern int TypeAlg;
 extern uint8_t Col;
 extern String AlgStr;
@@ -10,8 +10,6 @@ int NLeds;
 
 namespace HUB
 {
-
-  // билдер
   void build(gh::Builder &b)
   {
     b.Input(&NLeds).size(2);
@@ -22,12 +20,12 @@ namespace HUB
 
   void setup()
   {
-    // настройка MQTT/Serial/Bluetooth..
     hub.mqtt.config("m3.wqtt.ru", 14635, "u_9ICRMS", "n5V6oZGA");
+    hub.setVersion(String(F(PROJECT_GH_REPO "@")) + F(PROJECT_FW_VERSION));
     // hub.mqtt.config("test.mosquitto.org", 8081);
 
-    hub.onBuild(build); // подключаем билдер
-    hub.begin();        // запускаем систему
+    hub.onBuild(build);
+    hub.begin();
 
     Serial.println("hub begin");
     hub.tick();
@@ -37,5 +35,4 @@ namespace HUB
   {
     hub.tick();
   }
-
 }

@@ -1,0 +1,50 @@
+name: Release firmware
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-upload:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Sync GyverHub project.json
+        run: python tools/sync_gyverhub_project.py
+
+      - name: Ensure project.json is up to date
+        run: git diff --exit-code -- project.json
+
+      - name: Build firmware
+        run: pio run -e esp32-s3-devkitc-1
+
+      - name: Prepare release asset
+        run: cp .pio/build/esp32-s3-devkitc-1/firmware.bin AutoNEON-esp32-s3-devkitc-1.bin
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AutoNEON-esp32-s3-devkitc-1
+          path: AutoNEON-esp32-s3-devkitc-1.bin
+
+      - name: Upload firmware to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: AutoNEON-esp32-s3-devkitc-1.bin
+          fail_on_unmatched_files: true

@@ -3,12 +3,12 @@
 // GyverHub OTA expects the firmware version in the form "owner/repo@version".
 // Keep these values in sync with project.json.
 #define PROJECT_GH_REPO "Sulmeldir/AutoNeon"
-#define PROJECT_FW_VERSION "0.1.0"
+#define PROJECT_FW_VERSION "0.1.1"
 
 // Human-readable metadata for the project repository.
 #define PROJECT_NAME "AutoNEON"
 #define PROJECT_DESCRIPTION "ESP32-S3 controller for FastLED neon strip effects with GyverHub UI"
-#define PROJECT_RELEASE_NOTES "Initial GyverHub OTA setup"
+#define PROJECT_RELEASE_NOTES "Second OTA test release"
 
 // GyverHub repository metadata used to generate project.json.
 #define PROJECT_GH_CHIP_FAMILY "ESP32-S3"

@@ -1,5 +1,7 @@
 # Normalize text files by default and keep repository line endings predictable.
 * text=auto
+.gitattributes text eol=lf
+.gitignore text eol=lf
 
 # Source code and project configuration should stay LF across platforms.
 *.c text eol=lf
